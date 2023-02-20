@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useLazyQuery, gql } from '@apollo/client'
+import { useQuery, useLazyQuery, gql, useMutation } from '@apollo/client'
 
 const QUERY_ALL_USERS = gql`
     query GetAllUsers{
@@ -32,12 +32,30 @@ const GET_MOVIE_BY_NAME = gql`
   }
 `;
 
+const CREATE_USER_MUTATION = gql`
+    mutation CreateUser($input: CreateUserInput!) {
+        createUser(input: $input){
+            name
+            id
+        }
+    }
+`;
+
+
 function DisplayData() {
     const [movieSearched, setMovieSearched] = useState("");
 
-    const {data, loading, error } = useQuery(QUERY_ALL_USERS);
+    // Create user state
+    const [name, setName] = useState("");
+    const [username, setUserName] = useState("");
+    const [age, setAge] = useState("");
+    const [nationality, setNationality] = useState("");
+
+    const {data, loading, error, refetch } = useQuery(QUERY_ALL_USERS);
     const { data: movieData } = useQuery(QUERY_ALL_MOVIES);
     const [fetchMovie, {data: movieSearchedData, error: movieError}] = useLazyQuery(GET_MOVIE_BY_NAME);
+
+    const [createUser] = useMutation(CREATE_USER_MUTATION);
 
     if(loading){
         return <h2>data is loading</h2>
@@ -49,6 +67,43 @@ function DisplayData() {
 
     return (
         <div>
+            <div>
+                <input 
+                    type="text" 
+                    placeholder='Name'
+                    onChange={(event) => {
+                        setName(event.target.value);
+                    }}
+                />
+                <input 
+                    type="text" 
+                    placeholder='Username'
+                    onChange={(event) => {
+                        setUserName(event.target.value);
+                    }}
+                />
+                <input 
+                    type="number" 
+                    placeholder='Age'
+                    onChange={(event) => {
+                        setAge(event.target.value);
+                    }}
+                />
+                <input 
+                    type="text" 
+                    placeholder='Nationality'
+                    onChange={(event) => {
+                        setNationality(event.target.value.toUpperCase());
+                    }}    
+                />
+                <button onClick = {() => {
+                    createUser({variables: {input: {name, username, age: Number(age), nationality}},});
+
+                    refetch();
+                }}>
+                    Create User
+                </button>
+            </div>
             <div>
                 {data && data.users.map((user) => {
                     return (
